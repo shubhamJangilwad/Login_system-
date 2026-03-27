@@ -5,13 +5,13 @@ This project is used for check valid user login.
 
 ## Features
 - Enter username , password
-- if user valid login - login successfully
+- check user valid -login 
 - else invalid user
 
 ## Technologies Used
 - Python
 - Flask(session)
-- HTML
+- HTML(Template inheritance)
 
 ## How to Run
 1. Run app.py

@@ -33,7 +33,7 @@ def logout():
 @app.route("/profile")
 def profile():
     if "user" in session:
-        return "This is profile page"
+        return render_template("profile.html")
     else:
         return redirect("/")
 
