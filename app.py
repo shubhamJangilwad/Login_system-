@@ -1,7 +1,6 @@
 from flask import Flask, render_template,request,session,redirect
 import sqlite3
 
-
 app = Flask(__name__)
 app.secret_key = "abc123"
 
@@ -52,9 +51,9 @@ def save():
     if "user" not in session:
         return redirect("/")
     name = request.form.get("name")
-    m1 = int(request.form.get("mark1" ))
-    m2 = int(request.form.get("mark2" ))
-    m3 = int(request.form.get("mark3" ))
+    m1 = int(request.form.get("mark1" )or 0)
+    m2 = int(request.form.get("mark2" )or 0)
+    m3 = int(request.form.get("mark3" )or 0)
 
     total = m1 + m2 + m3
     percent = round( total /3 ,2)
@@ -73,12 +72,22 @@ def save():
     else:
         status = "Fail"
 
+    students = {
+        "name": name,
+        "total":total,
+        "percent":percent,
+        "grade":grade,
+        "status":status
+    }
+
     conn = sqlite3.connect("students.db")
     cursor = conn.cursor()
 
     cursor.execute(
-        "INSERT INTO students (name, total, percent, grade, status) VALUES (?, ?, ?, ?, ?)",
-        (name, total, percent, grade, status)
+        "INSERT INTO students (name, total, percent, grade, status) VALUES (:name, :total, :percent, :grade, :status)",
+        students
+
+
     )
 
     conn.commit()
@@ -92,11 +101,24 @@ def view():
         cursor = conn.cursor()
 
         cursor.execute("SELECT * FROM students")
-        students = cursor.fetchall()
+        rows = cursor.fetchall()
+
         conn.close()
+
+        students = []
+
+        for r in rows:
+            student = {
+                "id": r[0],
+                "name": r[1],
+                "total": r[2],
+                "percent": r[3],
+                "grade": r[4],
+                "status": r[5]
+            }
+            students.append(student)
+
         return render_template("view.html", students=students)
-
-
     else:
         return redirect("/")
 
@@ -106,6 +128,83 @@ def clear():
     cursor = conn.cursor()
 
     cursor.execute("DELETE FROM students")
+
+    conn.commit()
+    conn.close()
+
+    return redirect("/view")
+
+@app.route("/delete/<int:id>")
+def delete(id):
+    if "user" not in session:
+        return redirect("/")
+
+    conn = sqlite3.connect("students.db")
+    cursor = conn.cursor()
+
+    cursor.execute("DELETE FROM students WHERE id = ?", (id,))
+
+    conn.commit()
+    conn.close()
+
+    return redirect("/view")
+
+@app.route("/edit/<int:id>")
+def edit(id):
+    if "user" not in session:
+        return redirect("/")
+
+    conn = sqlite3.connect("students.db")
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM students WHERE id = ?", (id,))
+    row = cursor.fetchone()
+
+    conn.close()
+
+    student = {
+        "id": row[0],
+        "name": row[1],
+        "total": row[2],
+        "percent": row[3],
+        "grade": row[4],
+        "status": row[5]
+    }
+
+    return render_template("edit.html", student=student)
+
+@app.route("/update/<int:id>", methods=["POST"])
+def update(id):
+    if "user" not in session:
+        return redirect("/")
+
+    name = request.form.get("name")
+    m1 = int(request.form.get("mark1") or 0)
+    m2 = int(request.form.get("mark2") or 0)
+    m3 = int(request.form.get("mark3") or 0)
+
+    total = m1 + m2 + m3
+    percent = round(total / 3, 2)
+
+    if percent >= 80:
+        grade = "A"
+    elif percent >= 60:
+        grade = "B"
+    elif percent >= 40:
+        grade = "C"
+    else:
+        grade = "F"
+
+    status = "Pass" if percent >= 40 else "Fail"
+
+    conn = sqlite3.connect("students.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE students
+        SET name=?, total=?, percent=?, grade=?, status=?
+        WHERE id=?
+    """, (name, total, percent, grade, status, id))
 
     conn.commit()
     conn.close()

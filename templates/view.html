@@ -13,16 +13,25 @@
         <th>Percent</th>
         <th>Grade</th>
         <th>Status</th>
+        <th>Action</th>
     </tr>
 
     {% for s in students %}
     <tr>
-        <td>{{ loop.index }}
-        <td>{{ s[1] }}</td>
-        <td>{{ s[2] }}</td>
-        <td>{{ s[3] }}</td>
-        <td>{{ s[4] }}</td>
-        <td>{{ s[5] }}</td>
+        <td>{{ loop.index }}</td>
+        <td>{{ s.name }}</td>
+        <td>{{ s.total }}</td>
+        <td>{{ s.percent }}</td>
+        <td>{{ s.grade }}</td>
+        <td>{{ s.status }}</td>
+        <td>
+            <a href="/edit/{{ s.id }}">
+        <button>Edit</button>
+            </a>
+            <a href="/delete/{{ s.id }}">
+        <button>Delete</button>
+            </a>
+        </td>
     </tr>
     {% endfor %}
 </table>
